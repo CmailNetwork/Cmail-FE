@@ -1,0 +1,44 @@
+image: node:16.13.0
+# Cache node modules - speeds up future builds
+cache:
+  paths:
+    - node_modules
+
+# 声明部署阶段两个：build、deploy
+stages:
+  - build
+  - deploy
+
+.yarn_build:
+  script: |
+    yarn
+    CI=false yarn build
+  artifacts:
+    paths:
+      - ./build
+
+# extends 继承上的配置
+# tags是配置runner的tag
+# 触发条件，只有main分支发生变动是触发，比如push、merge
+yarn_dev:
+  extends: .yarn_build
+  stage: build
+  tags:
+    - txCloud
+  only:
+    refs:
+      - main
+
+# deploy
+# 只有main分支发生变动触发
+# tags表示使用的runner
+# 运行shell脚本
+deploy-job:
+  stage: deploy
+  only:
+    refs:
+      - main
+  tags:
+    - txCloud
+  script:
+    - bash publish.sh
